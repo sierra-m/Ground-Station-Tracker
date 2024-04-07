@@ -51,18 +51,16 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         super(Window, self).__init__()
 
         self.setupUi(self)
-
-        self.IMEIList = Balloon_Coordinates.list_IMEI()
+        self.Balloon = Balloon_Coordinates()  # Reqs modem list
 
         self.arduinoConnected = False
-        self.IMEIAssigned = False
+        self.ModemAssigned = False
         self.GSLocationSet = False
         self.calibrated = False
 
         self.tracking = False
 
         self.GSArduino = None  # classes will be instantiated later
-        self.Balloon = None
 
         self.trackThread = None
         self.worker = None
@@ -74,21 +72,22 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         self.startingAzimuth = 0
         self.startingElevation = 0
 
-        self.IMEIComboBox.addItem("")
-        for i in range(len(self.IMEIList)):
-            self.IMEIComboBox.addItem(self.IMEIList[i])
+        self.ModemComboBox.addItem("")
+        modem_titles = self.Balloon.get_modem_titles()
+        for title in modem_titles:
+            self.ModemComboBox.addItem(title)
 
-        completer = QCompleter(self.IMEIList)
+        completer = QCompleter(modem_titles)
         completer.setFilterMode(Qt.MatchContains)
-        self.IMEIComboBox.setEditable(True)
-        self.IMEIComboBox.setCompleter(completer)
+        self.ModemComboBox.setEditable(True)
+        self.ModemComboBox.setCompleter(completer)
 
         self.ports = None
         self.portNames = []
         self.comPortCounter = 0
         self.refreshArduinoList()
 
-        self.confirmIMEIButton.clicked.connect(self.assignIMEI)
+        self.confirmModemButton.clicked.connect(self.assignModem)
 
         self.GPSRequestButton.clicked.connect(self.getGSLocation)
         self.confirmGSLocationButton.clicked.connect(self.setGSLocation)
@@ -124,21 +123,21 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.predictingTrack = False
 
-    def assignIMEI(self):
-        # this function checks if an IMEI has been selected
-        # if an IMEI has been selected, it creates an instance of the balloon coordinates class using the IMEI
-        # if an IMEI has not been selected, it simply returns
-        if self.IMEIComboBox.currentIndex() != 0:  # SHOULD BE != FOR BOREALIS WEBSITE!
-            self.IMEIAssigned = True
-            print(self.IMEIComboBox.currentText())
-            self.Balloon = Balloon_Coordinates(self.IMEIComboBox.currentText())
+    def assignModem(self):
+        # this function checks if a Modem has been selected
+        # if a Modem has been selected, it creates an instance of the balloon coordinates class using the Modem
+        # if a Modem has not been selected, it simply returns
+        if self.ModemComboBox.currentIndex() != 0:  # SHOULD BE != FOR BOREALIS WEBSITE!
+            self.ModemAssigned = True
+            print(self.ModemComboBox.currentText())
+            self.Balloon.select_modem(self.ModemComboBox.currentText())
             testStr = self.Balloon.print_info()
             self.statusBox.setPlainText(testStr)
             # self.Balloon.getTimeDiff()
         else:
             print("select a balloon ")
-            self.statusBox.setPlainText("Please select a balloon IMEI")
-            self.IMEIAssigned = False
+            self.statusBox.setPlainText("Please select a balloon modem")
+            self.ModemAssigned = False
         return
 
     def refreshArduinoList(self):
@@ -355,10 +354,10 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             print("Ground Station Location not assigned")
             self.statusBox.setPlainText("Ground Station location not assigned")
 
-        if self.IMEIAssigned:
-            print("IMEI assigned")
+        if self.ModemAssigned:
+            print("Modem assigned")
         else:
-            print("IMEI not assigned")
+            print("Modem not assigned")
             self.statusBox.setPlainText("Please select a balloon")
 
         if self.arduinoConnected:
@@ -369,7 +368,7 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
 
         print("\n")
 
-        if self.arduinoConnected and self.IMEIAssigned and self.calibrated and self.GSLocationSet:
+        if self.arduinoConnected and self.ModemAssigned and self.calibrated and self.GSLocationSet:
             if self.predictingTrack:
                 self.statusBox.setPlainText("Starting tracking with predictions!")
                 self.callPredictTrack()
