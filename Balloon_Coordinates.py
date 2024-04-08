@@ -107,8 +107,8 @@ class Balloon_Coordinates:
             # Grab and Define modem's Latest Flight
             req = requests.post(f"https://borealis.rci.montana.edu/api/update", json=body)
         except requests.exceptions.RequestException:  # does not catch if there is no internet
-            print("No internet connection detected")
-            sys.exit(-1)
+            print("Request error - check internet")
+            return None
         
         data = req.json()
 
